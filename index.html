@@ -681,11 +681,11 @@
         const highCountBadge = document.getElementById('high-count-badge');
         
         // Estado da aplicação
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        let currentFilter = 'all';
+        let tasks = [];
         
         // Inicialização
         document.getElementById('current-year').textContent = new Date().getFullYear();
+        loadTasks(); // Carregar tarefas do localStorage primeiro
         updateStats();
         renderTasks();
         
@@ -784,7 +784,23 @@
         }
         
         function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+            console.log('Tarefas salvas:', tasks.length); // Para debug
+        }
+        
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('taskflow_tasks');
+            if (savedTasks) {
+                try {
+                    tasks = JSON.parse(savedTasks);
+                    console.log('Tarefas carregadas:', tasks.length); // Para debug
+                } catch (e) {
+                    console.error('Erro ao carregar tarefas:', e);
+                    tasks = [];
+                }
+            } else {
+                tasks = [];
+            }
         }
         
         function updateStats() {
@@ -930,6 +946,9 @@
             
             updateTaskPriority(taskId, newPriority);
         }
+        
+        // Variável global para o filtro atual
+        let currentFilter = 'all';
     </script>
 </body>
 </html>
