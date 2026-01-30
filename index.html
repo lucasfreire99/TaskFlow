@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskFlow Pro | Gerenciador de Tarefas Inteligente</title>
+    <meta name="description" content="Gerencie suas tarefas com checklist, prioridades e sincronização offline">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -21,6 +26,7 @@
             --accent-hover: #6a3dff;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --border: #475569;
             --shadow: rgba(0, 0, 0, 0.3);
             
@@ -55,6 +61,143 @@
             padding: 0 20px;
         }
 
+        /* Banner de Instalação */
+        .install-banner {
+            background: linear-gradient(135deg, var(--accent), var(--high-priority));
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(124, 77, 255, 0.3);
+            animation: slideDown 0.5s ease;
+            display: none; /* Inicialmente escondido */
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .install-banner.hidden {
+            display: none;
+        }
+
+        .install-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .install-banner i {
+            font-size: 1.5rem;
+        }
+
+        .install-banner-text {
+            flex: 1;
+        }
+
+        .install-banner-text h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .install-banner-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .install-banner-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .install-btn {
+            padding: 10px 20px;
+            background-color: white;
+            color: var(--accent);
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .dismiss-btn {
+            padding: 10px 15px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dismiss-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Menu de Instalação */
+        .install-menu {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .install-fab {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--high-priority));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none; /* Inicialmente escondido */
+        }
+
+        .install-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Status de Offline */
+        .offline-status {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--warning);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            z-index: 1001;
+            display: none;
+        }
+
+        .offline-status.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Restante do CSS mantido do código anterior */
         header {
             text-align: center;
             padding: 30px 0;
@@ -526,10 +669,52 @@
             .task-filters {
                 justify-content: center;
             }
+            
+            .install-banner {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .install-banner-actions {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Banner de status offline -->
+    <div class="offline-status" id="offlineStatus">
+        <i class="fas fa-wifi-slash"></i> Você está offline. As alterações serão sincronizadas quando a conexão for restaurada.
+    </div>
+
+    <!-- Banner de instalação -->
+    <div class="install-banner" id="installBanner">
+        <div class="install-banner-content">
+            <i class="fas fa-mobile-alt"></i>
+            <div class="install-banner-text">
+                <h3>Instalar TaskFlow Pro</h3>
+                <p>Adicione à tela inicial para usar como app nativo e acesso offline</p>
+            </div>
+        </div>
+        <div class="install-banner-actions">
+            <button class="install-btn" id="installBtn">
+                <i class="fas fa-download"></i> Instalar
+            </button>
+            <button class="dismiss-btn" id="dismissBtn">
+                Agora não
+            </button>
+        </div>
+    </div>
+
+    <!-- Botão flutuante de instalação -->
+    <div class="install-menu" id="installMenu">
+        <button class="install-fab" id="installFab" title="Instalar aplicativo">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
     <div class="container">
         <header>
             <h1><i class="fas fa-tasks"></i> TaskFlow Pro</h1>
@@ -648,307 +833,655 @@
         </div>
 
         <footer>
-            <p>TaskFlow Pro &copy; <span id="current-year">2023</span> | Suas tarefas são salvas automaticamente no navegador</p>
+            <p>TaskFlow Pro &copy; <span id="current-year">2023</span> | App disponível para instalação | Funciona offline</p>
         </footer>
     </div>
 
+    <!-- Service Worker e Manifest embutidos no HTML -->
     <script>
-        // DOM Elements
-        const taskForm = document.getElementById('task-form');
-        const taskInput = document.getElementById('task-input');
-        const prioritySelect = document.getElementById('priority-select');
-        const taskLists = {
-            low: document.getElementById('low-priority-tasks'),
-            medium: document.getElementById('medium-priority-tasks'),
-            high: document.getElementById('high-priority-tasks')
+        // Criação do Manifest dinâmico
+        const manifest = {
+            "name": "TaskFlow Pro",
+            "short_name": "TaskFlow",
+            "description": "Gerencie tarefas com checklist e prioridades",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#0f172a",
+            "theme_color": "#0f172a",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237c4dff'/><text x='50' y='70' font-family='Arial' font-size='60' text-anchor='middle' fill='white'>✓</text></svg>",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                },
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237c4dff'/><text x='50' y='70' font-family='Arial' font-size='60' text-anchor='middle' fill='white'>✓</text></svg>",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
         };
-        const emptyStates = {
-            low: document.getElementById('empty-low'),
-            medium: document.getElementById('empty-medium'),
-            high: document.getElementById('empty-high')
-        };
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const clearCompletedBtn = document.getElementById('clear-completed');
-        const clearAllBtn = document.getElementById('clear-all');
-        const totalTasksEl = document.getElementById('total-tasks');
-        const pendingTasksEl = document.getElementById('pending-tasks');
-        const completedTasksEl = document.getElementById('completed-tasks');
-        const lowCountEl = document.getElementById('low-count');
-        const mediumCountEl = document.getElementById('medium-count');
-        const highCountEl = document.getElementById('high-count');
-        const lowCountBadge = document.getElementById('low-count-badge');
-        const mediumCountBadge = document.getElementById('medium-count-badge');
-        const highCountBadge = document.getElementById('high-count-badge');
+
+        // Criar um blob URL para o manifest
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
         
-        // Estado da aplicação
-        let tasks = [];
-        
-        // Inicialização
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-        loadTasks(); // Carregar tarefas do localStorage primeiro
-        updateStats();
-        renderTasks();
-        
-        // Event Listeners
-        taskForm.addEventListener('submit', addTask);
-        clearCompletedBtn.addEventListener('click', clearCompletedTasks);
-        clearAllBtn.addEventListener('click', clearAllTasks);
-        
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all buttons
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                // Add active class to clicked button
-                button.classList.add('active');
-                currentFilter = button.getAttribute('data-filter');
-                renderTasks();
+        // Atualizar o link do manifest
+        document.querySelector('link[rel="manifest"]').href = manifestURL;
+
+        // Código do Service Worker embutido
+        const serviceWorkerCode = `
+            const CACHE_NAME = 'taskflow-pro-v1';
+            const urlsToCache = [
+                './',
+                './index.html'
+            ];
+
+            self.addEventListener('install', event => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            return cache.addAll(urlsToCache);
+                        })
+                );
             });
-        });
-        
-        // Funções
-        function addTask(e) {
-            e.preventDefault();
+
+            self.addEventListener('fetch', event => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then(response => {
+                            if (response) {
+                                return response;
+                            }
+                            return fetch(event.request);
+                        })
+                );
+            });
+
+            self.addEventListener('activate', event => {
+                const cacheWhitelist = [CACHE_NAME];
+                event.waitUntil(
+                    caches.keys().then(cacheNames => {
+                        return Promise.all(
+                            cacheNames.map(cacheName => {
+                                if (cacheWhitelist.indexOf(cacheName) === -1) {
+                                    return caches.delete(cacheName);
+                                }
+                            })
+                        );
+                    })
+                );
+            });
+        `;
+
+        // Registrar o Service Worker
+        if ('serviceWorker' in navigator) {
+            const swBlob = new Blob([serviceWorkerCode], {type: 'application/javascript'});
+            const swURL = URL.createObjectURL(swBlob);
             
-            const taskText = taskInput.value.trim();
-            const priority = prioritySelect.value;
-            
-            if (!taskText) return;
-            
-            const newTask = {
-                id: Date.now(),
-                text: taskText,
-                priority: priority,
-                completed: false,
-                date: new Date().toLocaleDateString('pt-BR')
+            navigator.serviceWorker.register(swURL)
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar Service Worker:', error);
+                });
+        }
+
+        // Código principal da aplicação
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const taskForm = document.getElementById('task-form');
+            const taskInput = document.getElementById('task-input');
+            const prioritySelect = document.getElementById('priority-select');
+            const taskLists = {
+                low: document.getElementById('low-priority-tasks'),
+                medium: document.getElementById('medium-priority-tasks'),
+                high: document.getElementById('high-priority-tasks')
             };
+            const emptyStates = {
+                low: document.getElementById('empty-low'),
+                medium: document.getElementById('empty-medium'),
+                high: document.getElementById('empty-high')
+            };
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const clearCompletedBtn = document.getElementById('clear-completed');
+            const clearAllBtn = document.getElementById('clear-all');
+            const totalTasksEl = document.getElementById('total-tasks');
+            const pendingTasksEl = document.getElementById('pending-tasks');
+            const completedTasksEl = document.getElementById('completed-tasks');
+            const lowCountEl = document.getElementById('low-count');
+            const mediumCountEl = document.getElementById('medium-count');
+            const highCountEl = document.getElementById('high-count');
+            const lowCountBadge = document.getElementById('low-count-badge');
+            const mediumCountBadge = document.getElementById('medium-count-badge');
+            const highCountBadge = document.getElementById('high-count-badge');
+            const installBanner = document.getElementById('installBanner');
+            const installBtn = document.getElementById('installBtn');
+            const dismissBtn = document.getElementById('dismissBtn');
+            const installFab = document.getElementById('installFab');
+            const offlineStatus = document.getElementById('offlineStatus');
             
-            tasks.push(newTask);
-            saveTasks();
-            renderTasks();
+            // Estado da aplicação
+            let tasks = [];
+            let currentFilter = 'all';
+            let deferredPrompt = null;
+            
+            // Inicialização
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            loadTasks();
             updateStats();
+            renderTasks();
             
-            // Reset form
-            taskInput.value = '';
-            taskInput.focus();
-        }
-        
-        function toggleTask(id) {
-            tasks = tasks.map(task => {
-                if (task.id === id) {
-                    return { ...task, completed: !task.completed };
-                }
-                return task;
+            // Verificar status de conexão
+            updateOnlineStatus();
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            
+            // Event Listeners para instalação
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallBanner();
             });
             
-            saveTasks();
-            renderTasks();
-            updateStats();
-        }
-        
-        function deleteTask(id) {
-            tasks = tasks.filter(task => task.id !== id);
-            saveTasks();
-            renderTasks();
-            updateStats();
-        }
-        
-        function updateTaskPriority(id, newPriority) {
-            tasks = tasks.map(task => {
-                if (task.id === id) {
-                    return { ...task, priority: newPriority };
-                }
-                return task;
+            installBtn.addEventListener('click', installApp);
+            dismissBtn.addEventListener('click', dismissInstallBanner);
+            installFab.addEventListener('click', showInstallInstructions);
+            
+            // Event Listeners para tarefas
+            taskForm.addEventListener('submit', addTask);
+            clearCompletedBtn.addEventListener('click', clearCompletedTasks);
+            clearAllBtn.addEventListener('click', clearAllTasks);
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentFilter = button.getAttribute('data-filter');
+                    renderTasks();
+                });
             });
             
-            saveTasks();
-            renderTasks();
-            updateStats();
-        }
-        
-        function clearCompletedTasks() {
-            tasks = tasks.filter(task => !task.completed);
-            saveTasks();
-            renderTasks();
-            updateStats();
-        }
-        
-        function clearAllTasks() {
-            if (tasks.length === 0) return;
+            // Funções de instalação PWA
+            function showInstallBanner() {
+                // Verificar se já foi instalado
+                if (isAppInstalled()) {
+                    return;
+                }
+                
+                // Mostrar banner depois de 3 segundos
+                setTimeout(() => {
+                    installBanner.style.display = 'flex';
+                    installFab.style.display = 'flex';
+                    
+                    // Esconder banner automaticamente após 30 segundos
+                    setTimeout(() => {
+                        if (installBanner.style.display !== 'none') {
+                            installBanner.style.display = 'none';
+                        }
+                    }, 30000);
+                }, 3000);
+            }
             
-            if (confirm('Tem certeza que deseja excluir todas as tarefas?')) {
-                tasks = [];
+            function dismissInstallBanner() {
+                installBanner.style.display = 'none';
+                localStorage.setItem('taskflow_install_dismissed', 'true');
+                
+                // Mostrar novamente após 7 dias
+                setTimeout(() => {
+                    localStorage.removeItem('taskflow_install_dismissed');
+                }, 7 * 24 * 60 * 60 * 1000);
+            }
+            
+            function installApp() {
+                if (!deferredPrompt) {
+                    showInstallInstructions();
+                    return;
+                }
+                
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação');
+                        installBanner.style.display = 'none';
+                        installFab.style.display = 'none';
+                        showToast('Aplicativo instalado com sucesso!');
+                    } else {
+                        console.log('Usuário recusou a instalação');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+            
+            function showInstallInstructions() {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isAndroid = /Android/.test(navigator.userAgent);
+                
+                let message = '';
+                
+                if (isIOS) {
+                    message = 'Para instalar, toque no botão Compartilhar (⎋) e selecione "Adicionar à Tela de Início"';
+                } else if (isAndroid) {
+                    message = 'Para instalar, toque no menu (⋮) e selecione "Adicionar à tela inicial"';
+                } else {
+                    message = 'Para instalar, clique no ícone de instalação na barra de endereço do navegador';
+                }
+                
+                showToast(message, 5000);
+            }
+            
+            function isAppInstalled() {
+                return window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone ||
+                       document.referrer.includes('android-app://');
+            }
+            
+            function updateOnlineStatus() {
+                if (navigator.onLine) {
+                    offlineStatus.classList.remove('show');
+                } else {
+                    offlineStatus.classList.add('show');
+                    showToast('Modo offline ativado. Suas alterações serão salvas localmente.');
+                }
+            }
+            
+            function showToast(message, duration = 3000) {
+                // Criar elemento de toast
+                const toast = document.createElement('div');
+                toast.textContent = message;
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: var(--accent);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: var(--radius);
+                    z-index: 1000;
+                    box-shadow: 0 5px 15px var(--shadow);
+                    animation: slideUp 0.3s ease;
+                `;
+                
+                document.body.appendChild(toast);
+                
+                // Remover após a duração
+                setTimeout(() => {
+                    toast.style.animation = 'slideDown 0.3s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, duration);
+            }
+            
+            // Funções de gerenciamento de tarefas
+            function addTask(e) {
+                e.preventDefault();
+                
+                const taskText = taskInput.value.trim();
+                const priority = prioritySelect.value;
+                
+                if (!taskText) return;
+                
+                const newTask = {
+                    id: Date.now(),
+                    text: taskText,
+                    priority: priority,
+                    completed: false,
+                    date: new Date().toLocaleDateString('pt-BR'),
+                    timestamp: Date.now()
+                };
+                
+                tasks.push(newTask);
                 saveTasks();
                 renderTasks();
                 updateStats();
+                
+                taskInput.value = '';
+                taskInput.focus();
+                
+                showToast('Tarefa adicionada com sucesso!');
             }
-        }
-        
-        function saveTasks() {
-            localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
-            console.log('Tarefas salvas:', tasks.length); // Para debug
-        }
-        
-        function loadTasks() {
-            const savedTasks = localStorage.getItem('taskflow_tasks');
-            if (savedTasks) {
+            
+            function toggleTask(id) {
+                tasks = tasks.map(task => {
+                    if (task.id === id) {
+                        return { ...task, completed: !task.completed };
+                    }
+                    return task;
+                });
+                
+                saveTasks();
+                renderTasks();
+                updateStats();
+                
+                const task = tasks.find(t => t.id === id);
+                const status = task.completed ? 'concluída' : 'pendente';
+                showToast(`Tarefa marcada como ${status}`);
+            }
+            
+            function deleteTask(id) {
+                const taskIndex = tasks.findIndex(task => task.id === id);
+                if (taskIndex === -1) return;
+                
+                const deletedTask = tasks[taskIndex];
+                tasks = tasks.filter(task => task.id !== id);
+                
+                saveTasks();
+                renderTasks();
+                updateStats();
+                
+                showToast('Tarefa removida');
+                
+                // Adicionar funcionalidade de desfazer
+                setTimeout(() => {
+                    const undoBtn = document.createElement('button');
+                    undoBtn.textContent = 'Desfazer';
+                    undoBtn.style.cssText = `
+                        margin-left: 10px;
+                        background: transparent;
+                        border: 1px solid white;
+                        color: white;
+                        padding: 2px 8px;
+                        border-radius: 3px;
+                        cursor: pointer;
+                    `;
+                    undoBtn.onclick = () => {
+                        tasks.splice(taskIndex, 0, deletedTask);
+                        saveTasks();
+                        renderTasks();
+                        updateStats();
+                        showToast('Ação desfeita');
+                    };
+                    
+                    // Mostrar notificação de desfazer
+                    const undoNotification = document.createElement('div');
+                    undoNotification.textContent = 'Tarefa removida ';
+                    undoNotification.appendChild(undoBtn);
+                    undoNotification.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background-color: var(--bg-secondary);
+                        color: var(--text-primary);
+                        padding: 12px 24px;
+                        border-radius: var(--radius);
+                        z-index: 1000;
+                        box-shadow: 0 5px 15px var(--shadow);
+                        display: flex;
+                        align-items: center;
+                        border-left: 4px solid var(--danger);
+                    `;
+                    
+                    document.body.appendChild(undoNotification);
+                    
+                    setTimeout(() => {
+                        if (document.body.contains(undoNotification)) {
+                            document.body.removeChild(undoNotification);
+                        }
+                    }, 5000);
+                }, 100);
+            }
+            
+            function updateTaskPriority(id, newPriority) {
+                tasks = tasks.map(task => {
+                    if (task.id === id) {
+                        return { ...task, priority: newPriority };
+                    }
+                    return task;
+                });
+                
+                saveTasks();
+                renderTasks();
+                updateStats();
+                
+                showToast(`Prioridade alterada para ${getPriorityLabel(newPriority)}`);
+            }
+            
+            function clearCompletedTasks() {
+                const completedCount = tasks.filter(task => task.completed).length;
+                if (completedCount === 0) return;
+                
+                if (confirm(`Deseja remover ${completedCount} tarefa(s) concluída(s)?`)) {
+                    tasks = tasks.filter(task => !task.completed);
+                    saveTasks();
+                    renderTasks();
+                    updateStats();
+                    
+                    showToast(`${completedCount} tarefa(s) removida(s)`);
+                }
+            }
+            
+            function clearAllTasks() {
+                if (tasks.length === 0) return;
+                
+                if (confirm(`Deseja remover todas as ${tasks.length} tarefas?`)) {
+                    tasks = [];
+                    saveTasks();
+                    renderTasks();
+                    updateStats();
+                    
+                    showToast('Todas as tarefas foram removidas');
+                }
+            }
+            
+            function saveTasks() {
                 try {
-                    tasks = JSON.parse(savedTasks);
-                    console.log('Tarefas carregadas:', tasks.length); // Para debug
+                    localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+                    // Sincronizar com IndexedDB para maior capacidade
+                    if ('indexedDB' in window) {
+                        saveToIndexedDB();
+                    }
                 } catch (e) {
-                    console.error('Erro ao carregar tarefas:', e);
+                    console.error('Erro ao salvar tarefas:', e);
+                    showToast('Erro ao salvar tarefas. Espaço de armazenamento pode estar cheio.', 5000);
+                }
+            }
+            
+            async function saveToIndexedDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('TaskFlowDB', 1);
+                    
+                    request.onupgradeneeded = function(event) {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('tasks')) {
+                            db.createObjectStore('tasks', { keyPath: 'id' });
+                        }
+                    };
+                    
+                    request.onsuccess = function(event) {
+                        const db = event.target.result;
+                        const transaction = db.transaction(['tasks'], 'readwrite');
+                        const store = transaction.objectStore('tasks');
+                        
+                        // Limpar store existente
+                        store.clear();
+                        
+                        // Adicionar todas as tarefas
+                        tasks.forEach(task => {
+                            store.put(task);
+                        });
+                        
+                        transaction.oncomplete = function() {
+                            resolve();
+                        };
+                        
+                        transaction.onerror = function() {
+                            reject(transaction.error);
+                        };
+                    };
+                    
+                    request.onerror = function(event) {
+                        reject(event.target.error);
+                    };
+                });
+            }
+            
+            function loadTasks() {
+                // Tentar carregar do localStorage primeiro
+                const savedTasks = localStorage.getItem('taskflow_tasks');
+                if (savedTasks) {
+                    try {
+                        tasks = JSON.parse(savedTasks);
+                        console.log('Tarefas carregadas do localStorage:', tasks.length);
+                    } catch (e) {
+                        console.error('Erro ao carregar tarefas do localStorage:', e);
+                        tasks = [];
+                    }
+                } else {
                     tasks = [];
                 }
-            } else {
-                tasks = [];
-            }
-        }
-        
-        function updateStats() {
-            const total = tasks.length;
-            const completed = tasks.filter(task => task.completed).length;
-            const pending = total - completed;
-            
-            // Contar por prioridade
-            const lowCount = tasks.filter(task => task.priority === 'low').length;
-            const mediumCount = tasks.filter(task => task.priority === 'medium').length;
-            const highCount = tasks.filter(task => task.priority === 'high').length;
-            
-            totalTasksEl.textContent = total;
-            completedTasksEl.textContent = completed;
-            pendingTasksEl.textContent = pending;
-            
-            lowCountEl.textContent = lowCount;
-            mediumCountEl.textContent = mediumCount;
-            highCountEl.textContent = highCount;
-            
-            lowCountBadge.textContent = lowCount;
-            mediumCountBadge.textContent = mediumCount;
-            highCountBadge.textContent = highCount;
-        }
-        
-        function renderTasks() {
-            // Limpar todas as listas
-            Object.values(taskLists).forEach(list => {
-                // Remove todos os itens de tarefa, mas mantém o estado vazio
-                const itemsToRemove = list.querySelectorAll('.task-item');
-                itemsToRemove.forEach(item => item.remove());
-            });
-            
-            // Mostrar ou ocultar estados vazios
-            updateEmptyStates();
-            
-            // Filtrar tarefas conforme o filtro selecionado
-            let filteredTasks = tasks;
-            
-            switch (currentFilter) {
-                case 'pending':
-                    filteredTasks = tasks.filter(task => !task.completed);
-                    break;
-                case 'completed':
-                    filteredTasks = tasks.filter(task => task.completed);
-                    break;
-            }
-            
-            // Renderizar tarefas em suas colunas respectivas
-            filteredTasks.forEach(task => {
-                const taskElement = createTaskElement(task);
-                const taskList = taskLists[task.priority];
                 
-                // Inserir antes do estado vazio
-                const emptyState = emptyStates[task.priority];
-                if (emptyState && emptyState.parentNode === taskList) {
-                    taskList.insertBefore(taskElement, emptyState);
-                } else {
-                    taskList.appendChild(taskElement);
+                // Verificar se o usuário já dispensou o banner de instalação
+                const installDismissed = localStorage.getItem('taskflow_install_dismissed');
+                if (installDismissed === 'true') {
+                    installBanner.style.display = 'none';
                 }
-            });
-        }
-        
-        function updateEmptyStates() {
-            // Contar tarefas por prioridade
-            const lowCount = tasks.filter(task => task.priority === 'low').length;
-            const mediumCount = tasks.filter(task => task.priority === 'medium').length;
-            const highCount = tasks.filter(task => task.priority === 'high').length;
-            
-            // Mostrar ou ocultar estados vazios com base no filtro
-            const showLow = (currentFilter === 'all' || 
-                (currentFilter === 'pending' && tasks.filter(t => t.priority === 'low' && !t.completed).length > 0) ||
-                (currentFilter === 'completed' && tasks.filter(t => t.priority === 'low' && t.completed).length > 0)) ? 
-                lowCount === 0 : false;
-            
-            const showMedium = (currentFilter === 'all' || 
-                (currentFilter === 'pending' && tasks.filter(t => t.priority === 'medium' && !t.completed).length > 0) ||
-                (currentFilter === 'completed' && tasks.filter(t => t.priority === 'medium' && t.completed).length > 0)) ? 
-                mediumCount === 0 : false;
-                
-            const showHigh = (currentFilter === 'all' || 
-                (currentFilter === 'pending' && tasks.filter(t => t.priority === 'high' && !t.completed).length > 0) ||
-                (currentFilter === 'completed' && tasks.filter(t => t.priority === 'high' && t.completed).length > 0)) ? 
-                highCount === 0 : false;
-            
-            emptyStates.low.style.display = showLow ? 'block' : 'none';
-            emptyStates.medium.style.display = showMedium ? 'block' : 'none';
-            emptyStates.high.style.display = showHigh ? 'block' : 'none';
-        }
-        
-        function createTaskElement(task) {
-            const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.priority} ${task.completed ? 'task-completed' : ''}`;
-            taskElement.dataset.id = task.id;
-            
-            taskElement.innerHTML = `
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-                <div class="task-content">
-                    <span class="task-text">${task.text}</span>
-                    <div>
-                        <span class="task-priority-badge ${task.priority}">${getPriorityLabel(task.priority)}</span>
-                        <span style="margin-left: 8px; font-size: 0.85rem; color: var(--text-muted);">${task.date}</span>
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button class="action-btn priority-btn" title="Alterar prioridade">
-                        <i class="fas fa-flag"></i>
-                    </button>
-                    <button class="action-btn delete-btn" title="Excluir tarefa">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            `;
-            
-            // Adicionar eventos
-            const checkbox = taskElement.querySelector('.task-checkbox');
-            const deleteBtn = taskElement.querySelector('.delete-btn');
-            const priorityBtn = taskElement.querySelector('.priority-btn');
-            
-            checkbox.addEventListener('change', () => toggleTask(task.id));
-            deleteBtn.addEventListener('click', () => deleteTask(task.id));
-            priorityBtn.addEventListener('click', () => changePriority(task.id));
-            
-            return taskElement;
-        }
-        
-        function getPriorityLabel(priority) {
-            switch(priority) {
-                case 'low': return 'Baixa';
-                case 'medium': return 'Média';
-                case 'high': return 'Alta';
-                default: return 'Média';
             }
-        }
-        
-        function changePriority(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) return;
             
-            // Ciclo de prioridades: low -> medium -> high -> low
-            const priorityCycle = { low: 'medium', medium: 'high', high: 'low' };
-            const newPriority = priorityCycle[task.priority];
+            function updateStats() {
+                const total = tasks.length;
+                const completed = tasks.filter(task => task.completed).length;
+                const pending = total - completed;
+                
+                const lowCount = tasks.filter(task => task.priority === 'low').length;
+                const mediumCount = tasks.filter(task => task.priority === 'medium').length;
+                const highCount = tasks.filter(task => task.priority === 'high').length;
+                
+                totalTasksEl.textContent = total;
+                completedTasksEl.textContent = completed;
+                pendingTasksEl.textContent = pending;
+                
+                lowCountEl.textContent = lowCount;
+                mediumCountEl.textContent = mediumCount;
+                highCountEl.textContent = highCount;
+                
+                lowCountBadge.textContent = lowCount;
+                mediumCountBadge.textContent = mediumCount;
+                highCountBadge.textContent = highCount;
+            }
             
-            updateTaskPriority(taskId, newPriority);
-        }
-        
-        // Variável global para o filtro atual
-        let currentFilter = 'all';
+            function renderTasks() {
+                Object.values(taskLists).forEach(list => {
+                    const itemsToRemove = list.querySelectorAll('.task-item');
+                    itemsToRemove.forEach(item => item.remove());
+                });
+                
+                updateEmptyStates();
+                
+                let filteredTasks = tasks;
+                
+                switch (currentFilter) {
+                    case 'pending':
+                        filteredTasks = tasks.filter(task => !task.completed);
+                        break;
+                    case 'completed':
+                        filteredTasks = tasks.filter(task => task.completed);
+                        break;
+                }
+                
+                filteredTasks.forEach(task => {
+                    const taskElement = createTaskElement(task);
+                    const taskList = taskLists[task.priority];
+                    
+                    const emptyState = emptyStates[task.priority];
+                    if (emptyState && emptyState.parentNode === taskList) {
+                        taskList.insertBefore(taskElement, emptyState);
+                    } else {
+                        taskList.appendChild(taskElement);
+                    }
+                });
+            }
+            
+            function updateEmptyStates() {
+                const lowCount = tasks.filter(task => task.priority === 'low').length;
+                const mediumCount = tasks.filter(task => task.priority === 'medium').length;
+                const highCount = tasks.filter(task => task.priority === 'high').length;
+                
+                const showLow = (currentFilter === 'all' || 
+                    (currentFilter === 'pending' && tasks.filter(t => t.priority === 'low' && !t.completed).length > 0) ||
+                    (currentFilter === 'completed' && tasks.filter(t => t.priority === 'low' && t.completed).length > 0)) ? 
+                    lowCount === 0 : false;
+                
+                const showMedium = (currentFilter === 'all' || 
+                    (currentFilter === 'pending' && tasks.filter(t => t.priority === 'medium' && !t.completed).length > 0) ||
+                    (currentFilter === 'completed' && tasks.filter(t => t.priority === 'medium' && t.completed).length > 0)) ? 
+                    mediumCount === 0 : false;
+                    
+                const showHigh = (currentFilter === 'all' || 
+                    (currentFilter === 'pending' && tasks.filter(t => t.priority === 'high' && !t.completed).length > 0) ||
+                    (currentFilter === 'completed' && tasks.filter(t => t.priority === 'high' && t.completed).length > 0)) ? 
+                    highCount === 0 : false;
+                
+                emptyStates.low.style.display = showLow ? 'block' : 'none';
+                emptyStates.medium.style.display = showMedium ? 'block' : 'none';
+                emptyStates.high.style.display = showHigh ? 'block' : 'none';
+            }
+            
+            function createTaskElement(task) {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.priority} ${task.completed ? 'task-completed' : ''}`;
+                taskElement.dataset.id = task.id;
+                
+                taskElement.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                    <div class="task-content">
+                        <span class="task-text">${task.text}</span>
+                        <div>
+                            <span class="task-priority-badge ${task.priority}">${getPriorityLabel(task.priority)}</span>
+                            <span style="margin-left: 8px; font-size: 0.85rem; color: var(--text-muted);">${task.date}</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-btn priority-btn" title="Alterar prioridade">
+                            <i class="fas fa-flag"></i>
+                        </button>
+                        <button class="action-btn delete-btn" title="Excluir tarefa">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                
+                const checkbox = taskElement.querySelector('.task-checkbox');
+                const deleteBtn = taskElement.querySelector('.delete-btn');
+                const priorityBtn = taskElement.querySelector('.priority-btn');
+                
+                checkbox.addEventListener('change', () => toggleTask(task.id));
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                priorityBtn.addEventListener('click', () => changePriority(task.id));
+                
+                return taskElement;
+            }
+            
+            function getPriorityLabel(priority) {
+                switch(priority) {
+                    case 'low': return 'Baixa';
+                    case 'medium': return 'Média';
+                    case 'high': return 'Alta';
+                    default: return 'Média';
+                }
+            }
+            
+            function changePriority(taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) return;
+                
+                const priorityCycle = { low: 'medium', medium: 'high', high: 'low' };
+                const newPriority = priorityCycle[task.priority];
+                
+                updateTaskPriority(taskId, newPriority);
+            }
+            
+            // Verificar se já está instalado como PWA
+            if (isAppInstalled()) {
+                console.log('App já instalado como PWA');
+                installBanner.style.display = 'none';
+                installFab.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
